@@ -9,47 +9,47 @@ interface Request {
   title: string;
   value: number;
   type: 'income' | 'outcome';
-  categoryTitle: string;
+  category: string;
 }
 class CreateTransactionService {
   public async execute({
     title,
     value,
     type,
-    categoryTitle,
+    category,
   }: Request): Promise<Transaction> {
     const transactionRepository = getCustomRepository(TransactionRepository);
     const categoryRepository = getRepository(Category);
 
-    let category = await categoryRepository.findOne({
-      title: categoryTitle,
-    });
-
-    if (!category) {
-      category = categoryRepository.create({
-        title: categoryTitle,
-      });
-      await categoryRepository.save(category);
-    }
+    const { total } = await transactionRepository.getBalance();
 
     if (!['income', 'outcome'].includes(type)) {
       throw Error('Type is not valid');
     }
 
-    const balance = await transactionRepository.getBalance();
-    if (balance) {
-      if (balance.total < value && type === 'outcome') {
-        throw new AppError('There is no total cash value!');
-      }
+    if (total < value && type === 'outcome') {
+      throw new AppError('There is no total cash value!');
+    }
+
+    let transactionCategory = await categoryRepository.findOne({
+      title: category,
+    });
+
+    if (!transactionCategory) {
+      transactionCategory = categoryRepository.create({
+        title: category,
+      });
+      await categoryRepository.save(transactionCategory);
     }
 
     const transaction = transactionRepository.create({
       title,
       value,
       type,
+      category: transactionCategory,
     });
 
-    transaction.category_id = category.id;
+    // transaction.category_id = category.id;
 
     await transactionRepository.save(transaction);
 

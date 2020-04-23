@@ -10,7 +10,13 @@ class DeleteTransactionService {
     }
 
     const transactionRepository = getCustomRepository(TransactionRepository);
-    await transactionRepository.delete(id);
+
+    const transaction = await transactionRepository.findOne(id);
+    if (!transaction) {
+      throw new AppError('Transaction does not exists.');
+    }
+    await transactionRepository.remove(transaction);
+    // await transactionRepository.delete(id);
   }
 }
 
