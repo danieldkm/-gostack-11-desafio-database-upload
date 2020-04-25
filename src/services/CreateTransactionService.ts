@@ -23,6 +23,7 @@ class CreateTransactionService {
 
     const { total } = await transactionRepository.getBalance();
 
+    console.log('type', type);
     if (!['income', 'outcome'].includes(type)) {
       throw Error('Type is not valid');
     }
